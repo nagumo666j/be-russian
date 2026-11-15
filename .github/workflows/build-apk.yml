@@ -40,13 +40,12 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Align Java compile target with Kotlin
+      - name: Align Kotlin JVM target with Android Java target
         run: |
           cat > /tmp/jvm-target.gradle <<'EOF'
           allprojects {
-              tasks.withType(org.gradle.api.tasks.compile.JavaCompile).configureEach {
-                  sourceCompatibility = '17'
-                  targetCompatibility = '17'
+              tasks.matching { it.name.startsWith('compile') && it.name.endsWith('Kotlin') }.configureEach {
+                  kotlinOptions.jvmTarget = '1.8'
               }
           }
           EOF
