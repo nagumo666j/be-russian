@@ -18,16 +18,8 @@ jobs:
 
       - name: Extract Android project
         run: |
-          unzip -q Be-Russian.zip -d extracted
-          PROJECT_DIR="$(find extracted -type f \\( -name settings.gradle -o -name settings.gradle.kts \\) -print -quit | xargs -r dirname)"
-          if [ -z "$PROJECT_DIR" ]; then
-            echo "Could not find settings.gradle or settings.gradle.kts in Be-Russian.zip"
-            echo "ZIP contents:"
-            unzip -Z1 Be-Russian.zip | head -200
-            exit 1
-          fi
-          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
-          echo "Found Gradle project at: $PROJECT_DIR"
+          unzip -q Be-Russian.zip -d .
+          test -f BeRussian/app/build.gradle
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -35,11 +27,15 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      # 1. تجهيز بيئة Android وإصلاح مسار sdkmanager (باستخدام إصدار v4 المحدث)
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools'
 
-      - name: Accept Android SDK licenses
-        run: yes | sdkmanager --licenses >/dev/null
+      # 2. تثبيت الحزم المطلوبة لمشروعك
+      - name: Install Android SDK packages
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -47,19 +43,11 @@ jobs:
           gradle-version: '8.9'
 
       - name: Build debug APK
-        run: |
-          cd "$PROJECT_DIR"
-          if [ -f ./gradlew ]; then
-            chmod +x ./gradlew
-            ./gradlew assembleDebug
-          else
-            gradle assembleDebug
-          fi
+        run: gradle -p BeRussian assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Be-Russian-APK
-          path: |
-            extracted/**/build/outputs/apk/debug/*.apk
+          path: BeRussian/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
