@@ -27,12 +27,10 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      # تم حذف خطوة Set up Android SDK المسببة للخطأ
-      # لأن بيئة GitHub تحتوي عليها مسبقاً
-
-      - name: Install Android SDK packages and Accept Licenses
+      # تثبيت الحزم المطلوبة وقبول التراخيص دفعة واحدة لضمان الاستقرار
+      - name: Install Android SDK packages
         run: |
-          yes | sdkmanager --licenses
+          yes | sdkmanager --licenses > /dev/null 2>&1
           sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
       - name: Set up Gradle
