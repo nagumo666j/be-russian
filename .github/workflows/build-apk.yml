@@ -27,13 +27,11 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      # 1. تجهيز بيئة Android وإصلاح مسار sdkmanager (باستخدام إصدار v4 المحدث)
       - name: Set up Android SDK
         uses: android-actions/setup-android@v4
         with:
           packages: 'platform-tools'
 
-      # 2. تثبيت الحزم المطلوبة لمشروعك
       - name: Install Android SDK packages
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
@@ -42,8 +40,19 @@ jobs:
         with:
           gradle-version: '8.9'
 
+      - name: Align Java compile target with Kotlin
+        run: |
+          cat > /tmp/jvm-target.gradle <<'EOF'
+          allprojects {
+              tasks.withType(org.gradle.api.tasks.compile.JavaCompile).configureEach {
+                  sourceCompatibility = '17'
+                  targetCompatibility = '17'
+              }
+          }
+          EOF
+
       - name: Build debug APK
-        run: gradle -p BeRussian assembleDebug
+        run: gradle -I /tmp/jvm-target.gradle -p BeRussian assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
