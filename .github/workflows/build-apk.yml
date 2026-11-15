@@ -1,10 +1,10 @@
-
 name: Build Be Russian APK
 
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -13,36 +13,36 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out repository
+        uses: actions/checkout@v4
 
-      - name: Extract project
+      - name: Extract Android project
         run: |
           unzip -q Be-Russian.zip -d .
           test -f BeRussian/app/build.gradle
 
-      - uses: actions/setup-java@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - - name: Set up Android SDK
-  run: |
-    echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> "$GITHUB_ENV"
-    echo "/usr/local/lib/android/sdk/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
-    echo "/usr/local/lib/android/sdk/platform-tools" >> "$GITHUB_PATH"
-    yes | sdkmanager --licenses
-    sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools"
-      - name: Install SDK
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
-      - uses: gradle/actions/setup-gradle@v6
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
-      - name: Build APK
+      - name: Build debug APK
         run: gradle -p BeRussian assembleDebug
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
         with:
           name: Be-Russian-APK
           path: BeRussian/app/build/outputs/apk/debug/app-debug.apk
